@@ -47,7 +47,6 @@ router.post('/products', (req, res) => {
 
 router.delete('/:pid', (req, res) => {
     const pid = req.params.pid;
-
     const product = products.find((product) => product.id === pid);
 
     if (!product) {

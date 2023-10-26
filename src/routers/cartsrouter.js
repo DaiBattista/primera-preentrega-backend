@@ -1,49 +1,41 @@
 const express = require('express');
+const uuid = require('uuid');
 const carts = require('../carts.json');
 
 const router = express.Router();
-
-function generateCartId() {
-    return Math.floor(Math.random() * 1000000);
-}
 
 router.get('/carts', (req, res) => {
     res.json(carts);
 });
 
-router.post('/carts', (req, res) => {
-    const cartId = generateCartId();
-    carts[cartId] = {
-        id: cartId,
+router.post('/api/carts', (req, res) => {
+    const newCart = {
+        id: uuid.v4(),
         products: [],
     };
-
-    res.json({
-        id: cartId,
-    });
+    carts.push(newCart);
+    res.status(201).json(newCart);
 });
 
-router.get('/carts/:cid', (req, res) => {
+router.get('/api/carts/:cid', (req, res) => {
     const cartId = req.params.cid;
+    const cart = carts.find((cart) => cart.id === cartId);
 
-    const cart = carts[cartId];
     if (!cart) {
         return res.status(404).json({
             message: `El carrito con ID ${cartId} no existe.`,
         });
     }
-
-    res.json({
-        products: cart.products,
-    });
+    res.json(cart);
 });
 
-router.post('/carts/:cid/products/:pid', (req, res) => {
+router.post('/api/carts/:cid/products', (req, res) => {
     const cartId = req.params.cid;
-    const productId = req.params.pid;
+    const productId = req.body.productId;
     const quantity = req.body.quantity;
 
-    const cart = carts[cartId];
+    const cart = carts.find((cart) => cart.id === cartId);
+
     if (!cart) {
         return res.status(404).json({
             message: `El carrito con ID ${cartId} no existe.`,
@@ -54,18 +46,15 @@ router.post('/carts/:cid/products/:pid', (req, res) => {
 
     if (!product) {
         cart.products.push({
-            product: productId,
-            quantity: quantity,
+            productId,
+            quantity,
         });
-    } else {
+    }
+    else {
         product.quantity += quantity;
     }
-
     saveCarts();
-
-    res.json({
-        product: product,
-    });
+    res.json(product);
 });
 
 function saveCarts() {
