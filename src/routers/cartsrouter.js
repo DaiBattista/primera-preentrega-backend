@@ -1,5 +1,6 @@
 const express = require('express');
 const uuid = require('uuid');
+const fs = require('fs');
 const carts = require('../carts.json');
 
 const router = express.Router();
@@ -14,6 +15,7 @@ router.post('/api/carts', (req, res) => {
         products: [],
     };
     carts.push(newCart);
+    saveCarts(); 
     res.status(201).json(newCart);
 });
 
@@ -29,10 +31,10 @@ router.get('/api/carts/:cid', (req, res) => {
     res.json(cart);
 });
 
-router.post('/api/carts/:cid/products', (req, res) => {
+router.post('/api/carts/:cid/products/:pid', (req, res) => {
     const cartId = req.params.cid;
-    const productId = req.body.productId;
-    const quantity = req.body.quantity;
+    const productId = req.params.pid;
+    const quantity = req.body.quantity || 1;
 
     const cart = carts.find((cart) => cart.id === cartId);
 
@@ -42,24 +44,25 @@ router.post('/api/carts/:cid/products', (req, res) => {
         });
     }
 
-    const product = cart.products.find((product) => product.id === productId);
+    const product = cart.products.find((product) => product.code === productId);
 
     if (!product) {
         cart.products.push({
-            productId,
+            code: productId,
             quantity,
         });
-    }
-    else {
+    } else {
         product.quantity += quantity;
     }
+
     saveCarts();
+
     res.json(product);
 });
 
 function saveCarts() {
     const data = JSON.stringify(carts);
-    fs.writeFile('../carts.json', data);
+    fs.writeFileSync('../carts.json', data);
 }
 
 module.exports = router;
