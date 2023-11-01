@@ -15,7 +15,7 @@ router.post('/api/carts', (req, res) => {
         products: [],
     };
     carts.push(newCart);
-    saveCarts(); 
+    saveCarts();
     res.status(201).json(newCart);
 });
 
@@ -31,7 +31,7 @@ router.get('/api/carts/:cid', (req, res) => {
     res.json(cart);
 });
 
-router.post('/api/carts/:cid/products/:pid', (req, res) => {
+router.post('/api/carts/:cid/product/:pid', (req, res) => {
     const cartId = req.params.cid;
     const productId = req.params.pid;
     const quantity = req.body.quantity || 1;
@@ -44,25 +44,35 @@ router.post('/api/carts/:cid/products/:pid', (req, res) => {
         });
     }
 
-    const product = cart.products.find((product) => product.code === productId);
+    // Verificar si el producto ya está en el carrito
+    const existingProduct = cart.products.find((product) => product.id === productId);
 
-    if (!product) {
+    if (!existingProduct) {
+        // Si el producto no existe en el carrito, agregarlo
         cart.products.push({
-            code: productId,
+            id: productId,
             quantity,
         });
     } else {
-        product.quantity += quantity;
+        // Si el producto ya está en el carrito, incrementa la cantidad
+        existingProduct.quantity += quantity;
     }
 
     saveCarts();
 
-    res.json(product);
+    res.json(cart);
 });
 
 function saveCarts() {
     const data = JSON.stringify(carts);
-    fs.writeFileSync('../carts.json', data);
+
+    fs.writeFile('../carts.json', data, (err) => {
+        if (err) {
+            console.error('Error writing carts.json:', err);
+        } else {
+            console.log('Carts saved successfully.');
+        }
+    });
 }
 
 module.exports = router;
